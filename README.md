@@ -17,7 +17,6 @@
 
 | 구분 | 링크 |
 |---|---|
-| GitHub Actions CI/CD 구축 시연 | 추후 업로드 예정 |
-| AWS Amplify 호스팅 시연 | 추후 업로드 예정 |
+| 시연영상 | https://youtu.be/KZB3fuptUIs |
 
 ---
