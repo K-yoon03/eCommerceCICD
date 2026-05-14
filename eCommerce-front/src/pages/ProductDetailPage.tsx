@@ -1,170 +1,136 @@
-import { useParams, useNavigate } from "react-router";
-import { useState } from "react";
-import { ShoppingCart, Heart, Star, Minus, Plus } from "lucide-react";
+import { useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router'
+import { productApi } from '../api/productApi'
+import { fileApi } from '../api/fileApi'
+import type { ProductDetail } from '../api/productApi'
 
 export default function ProductDetailPage() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [quantity, setQuantity] = useState(1);
-  const [selectedImage, setSelectedImage] = useState(0);
+  const { noProduct } = useParams<{ noProduct: string }>()
+  const navigate = useNavigate()
 
-  const product = {
-    id: parseInt(id || "1"),
-    name: "Wireless Earbuds",
-    price: 89000,
-    description:
-      "Premium wireless earbuds featuring advanced noise cancellation technology. Experience crystal-clear sound quality with ergonomic design for all-day comfort. Perfect for music lovers and professionals alike.",
-    features: [
-      "Active noise cancellation",
-      "24-hour battery life",
-      "Water-resistant IPX4",
-      "Premium sound quality"
-    ],
-    images: [
-      "https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=800&h=800&fit=crop",
-      "https://images.unsplash.com/photo-1606400082889-f9cfef98e1f6?w=800&h=800&fit=crop",
-      "https://images.unsplash.com/photo-1598965675045-38f5a7d2a6b5?w=800&h=800&fit=crop",
-    ],
-    stock: 50,
-  };
+  const [product, setProduct] = useState<ProductDetail | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [quantity, setQuantity] = useState(1)
 
-  const handleAddToCart = () => {
-    // TODO: API 연동
-    alert("Added to cart!");
-  };
+  useEffect(() => {
+    if (!noProduct) return
+    productApi.getProduct(noProduct)
+      .then(res => setProduct(res.data))
+      .catch(() => setError('상품을 불러오지 못했습니다.'))
+      .finally(() => setLoading(false))
+  }, [noProduct])
 
-  const handleBuyNow = () => {
-    navigate("/order");
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-sm text-gray-400 tracking-wider">LOADING...</p>
+      </div>
+    )
+  }
+
+  if (error || !product) {
+    return (
+      <div className="min-h-screen flex items-center justify-center flex-col gap-4">
+        <p className="text-sm text-red-400">{error || '상품을 찾을 수 없습니다.'}</p>
+        <button onClick={() => navigate('/products')} className="text-sm underline">
+          목록으로 돌아가기
+        </button>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 mb-24">
-          <div>
-            <div className="aspect-square bg-gray-100 mb-4 overflow-hidden">
-              <img
-                src={product.images[selectedImage]}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
+
+        {/* 썸네일 */}
+        <div className="aspect-square bg-gray-100 overflow-hidden">
+          {product.nbThumbnail ? (
+            <img
+              src={fileApi.getFileUrl(product.nbThumbnail)}
+              alt={product.nmProduct}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs tracking-wider">
+              NO IMAGE
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              {product.images.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImage(index)}
-                  className={`aspect-square bg-gray-100 overflow-hidden ${
-                    selectedImage === index ? "ring-2 ring-black" : "opacity-60 hover:opacity-100"
-                  } transition-opacity`}
-                >
-                  <img
-                    src={image}
-                    alt={`${product.name} ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="lg:pt-12">
-            <h1 className="text-3xl md:text-4xl font-light tracking-tight mb-6">
-              {product.name}
-            </h1>
-
-            <p className="text-2xl mb-8">
-              ₩{product.price.toLocaleString()}
-            </p>
-
-            <div className="border-t border-b border-gray-200 py-8 mb-8">
-              <p className="text-gray-600 leading-relaxed mb-6">
-                {product.description}
-              </p>
-
-              <div className="space-y-2">
-                <p className="text-sm tracking-wider mb-3">FEATURES</p>
-                {product.features.map((feature, index) => (
-                  <p key={index} className="text-sm text-gray-600">• {feature}</p>
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-8">
-              <label className="block text-sm tracking-wider mb-4">QUANTITY</label>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="w-12 h-12 border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
-                >
-                  <Minus className="w-4 h-4" />
-                </button>
-                <span className="w-16 text-center">{quantity}</span>
-                <button
-                  onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                  className="w-12 h-12 border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            <div className="flex gap-4 mb-6">
-              <button
-                onClick={handleAddToCart}
-                className="flex-1 bg-white border border-black text-black py-4 text-sm tracking-wider hover:bg-black hover:text-white transition-colors flex items-center justify-center gap-2"
-              >
-                <ShoppingCart className="w-4 h-4" />
-                ADD TO CART
-              </button>
-              <button className="w-14 h-14 border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors">
-                <Heart className="w-5 h-5" />
-              </button>
-            </div>
-
-            <button
-              onClick={handleBuyNow}
-              className="w-full bg-black text-white py-4 text-sm tracking-wider hover:bg-gray-900 transition-colors"
-            >
-              BUY NOW
-            </button>
-
-            <div className="mt-8 pt-8 border-t border-gray-200">
-              <p className="text-xs text-gray-600 leading-relaxed">
-                Free shipping on orders over ₩50,000<br/>
-                Easy returns within 30 days<br/>
-                In stock: {product.stock} available
-              </p>
-            </div>
-          </div>
+          )}
         </div>
 
-        <div className="border-t border-gray-200 pt-16">
-          <h2 className="text-2xl font-light tracking-tight mb-12">Customer Reviews</h2>
-          <div className="space-y-8 max-w-3xl">
-            {[
-              { name: "Sarah Kim", rating: 5, date: "May 12, 2026", review: "Exceptional sound quality and comfort. Worth every penny." },
-              { name: "James Park", rating: 5, date: "May 10, 2026", review: "Best wireless earbuds I've owned. The noise cancellation is impressive." },
-              { name: "Emily Lee", rating: 4, date: "May 8, 2026", review: "Great product overall. Battery life is excellent." },
-            ].map((review, index) => (
-              <div key={index} className="pb-8 border-b border-gray-100 last:border-b-0">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="flex text-black">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-4 h-4 ${i < review.rating ? "fill-current" : "stroke-current fill-none"}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <p className="text-gray-800 mb-2">{review.review}</p>
-                <p className="text-sm text-gray-500">{review.name} • {review.date}</p>
-              </div>
-            ))}
+        {/* 상품 정보 */}
+        <div className="flex flex-col gap-6">
+          <h1 className="text-2xl font-light tracking-wide">{product.nmProduct}</h1>
+
+          {/* 가격 */}
+          <div className="space-y-1">
+            {product.qtCustomer && (
+              <p className="text-sm text-gray-400 line-through">
+                {product.qtCustomer.toLocaleString()}원
+              </p>
+            )}
+            <p className="text-2xl font-medium">
+              {product.qtSalePrice.toLocaleString()}원
+            </p>
           </div>
+
+          {/* 배송비 */}
+          <p className="text-sm text-gray-500">
+            배송비{' '}
+            {product.qtDeliveryFee
+              ? `${product.qtDeliveryFee.toLocaleString()}원`
+              : '무료'}
+          </p>
+
+          {/* 재고 */}
+          {product.qtStock !== null && (
+            <p className="text-sm text-gray-500">
+              재고 {product.qtStock.toLocaleString()}개
+            </p>
+          )}
+
+          {/* 수량 */}
+          <div className="flex items-center gap-4">
+            <span className="text-xs tracking-wider text-gray-700">QUANTITY</span>
+            <div className="flex items-center border border-gray-200">
+              <button
+                onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 transition-colors"
+              >
+                −
+              </button>
+              <span className="w-12 text-center text-sm">{quantity}</span>
+              <button
+                onClick={() => setQuantity(q => q + 1)}
+                className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 transition-colors"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* 버튼 */}
+          <div className="flex flex-col gap-3 mt-4">
+            <button className="w-full bg-black text-white py-4 text-sm tracking-wider hover:bg-gray-900 transition-colors">
+              ADD TO CART
+            </button>
+            <button className="w-full border border-black py-4 text-sm tracking-wider hover:bg-gray-50 transition-colors">
+              BUY NOW
+            </button>
+          </div>
+
+          {/* 상세 설명 */}
+          {product.nmDetailExplain && (
+            <div className="border-t border-gray-100 pt-6 mt-4">
+              <p className="text-xs tracking-wider text-gray-700 mb-3">DESCRIPTION</p>
+              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+                {product.nmDetailExplain}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
-  );
+  )
 }
