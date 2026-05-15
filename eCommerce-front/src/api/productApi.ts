@@ -9,6 +9,16 @@ export interface ProductList {
   qtStock: number | null
 }
 
+export interface ProductPage {
+  content: ProductList[]
+  totalPages: number
+  totalElements: number
+  number: number       // 현재 페이지
+  size: number
+  first: boolean
+  last: boolean
+}
+
 export interface ProductDetail {
   noProduct: string
   nmProduct: string
@@ -38,8 +48,12 @@ export interface ProductSavePayload {
 }
 
 export const productApi = {
-  getProducts: () =>
-    api.get<ProductList[]>('/api/products'),
+  getProducts: (params?: {
+    categoryId?: number
+    page?: number
+    size?: number
+  }) =>
+    api.get<ProductPage>('/api/products', { params }),
 
   getProduct: (noProduct: string) =>
     api.get<ProductDetail>(`/api/products/${noProduct}`),

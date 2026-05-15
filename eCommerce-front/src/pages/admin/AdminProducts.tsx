@@ -35,7 +35,7 @@ export default function AdminProducts() {
 
   const fetchProducts = () => {
     productApi.getProducts()
-      .then(res => setProducts(res.data))
+      .then(res => setProducts(res.data.content))
       .finally(() => setLoading(false))
   }
 

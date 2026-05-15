@@ -10,6 +10,7 @@ import ProductDetailPage from './pages/ProductDetailPage'
 import CartPage from './pages/CartPage'
 import OrderPage from './pages/OrderPage'
 import MyPage from './pages/MyPage'
+import OrderDetailPage from './pages/OrderDetailPage'
 import NotFoundPage from './pages/NotFoundPage'
 
 import AdminDashboard from './pages/admin/AdminDashboard'
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/order" element={<OrderPage />} />
           <Route path="/mypage" element={<MyPage />} />
+          <Route path="/orders/:idOrder" element={<OrderDetailPage />} />
         </Route>
 
         {/* 인증 라우트 (헤더/푸터 없음) */}

@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { productApi } from '../api/productApi'
+import { basketApi } from '../api/basketApi'
 import { fileApi } from '../api/fileApi'
+import { useAuth } from '../context/AuthContext'
 import type { ProductDetail } from '../api/productApi'
 
 export default function ProductDetailPage() {
   const { noProduct } = useParams<{ noProduct: string }>()
   const navigate = useNavigate()
+  const { isLoggedIn } = useAuth()
 
   const [product, setProduct] = useState<ProductDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [quantity, setQuantity] = useState(1)
+  const [adding, setAdding] = useState(false)
 
   useEffect(() => {
     if (!noProduct) return
@@ -20,6 +24,34 @@ export default function ProductDetailPage() {
       .catch(() => setError('상품을 불러오지 못했습니다.'))
       .finally(() => setLoading(false))
   }, [noProduct])
+
+  const handleAddToCart = async () => {
+    if (!isLoggedIn) { navigate('/login'); return }
+    if (!product) return
+    setAdding(true)
+    try {
+      await basketApi.addItem({ noProduct: product.noProduct, qtBasketItem: quantity })
+      navigate('/cart')
+    } catch {
+      alert('장바구니 담기에 실패했습니다.')
+    } finally {
+      setAdding(false)
+    }
+  }
+
+  const handleBuyNow = async () => {
+    if (!isLoggedIn) { navigate('/login'); return }
+    if (!product) return
+    setAdding(true)
+    try {
+      await basketApi.addItem({ noProduct: product.noProduct, qtBasketItem: quantity })
+      navigate('/order')
+    } catch {
+      alert('오류가 발생했습니다.')
+    } finally {
+      setAdding(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -63,7 +95,6 @@ export default function ProductDetailPage() {
         <div className="flex flex-col gap-6">
           <h1 className="text-2xl font-light tracking-wide">{product.nmProduct}</h1>
 
-          {/* 가격 */}
           <div className="space-y-1">
             {product.qtCustomer && (
               <p className="text-sm text-gray-400 line-through">
@@ -75,7 +106,6 @@ export default function ProductDetailPage() {
             </p>
           </div>
 
-          {/* 배송비 */}
           <p className="text-sm text-gray-500">
             배송비{' '}
             {product.qtDeliveryFee
@@ -83,7 +113,6 @@ export default function ProductDetailPage() {
               : '무료'}
           </p>
 
-          {/* 재고 */}
           {product.qtStock !== null && (
             <p className="text-sm text-gray-500">
               재고 {product.qtStock.toLocaleString()}개
@@ -112,15 +141,22 @@ export default function ProductDetailPage() {
 
           {/* 버튼 */}
           <div className="flex flex-col gap-3 mt-4">
-            <button className="w-full bg-black text-white py-4 text-sm tracking-wider hover:bg-gray-900 transition-colors">
-              ADD TO CART
+            <button
+              onClick={handleAddToCart}
+              disabled={adding}
+              className="w-full bg-black text-white py-4 text-sm tracking-wider hover:bg-gray-900 transition-colors disabled:bg-gray-400"
+            >
+              {adding ? '처리 중...' : 'ADD TO CART'}
             </button>
-            <button className="w-full border border-black py-4 text-sm tracking-wider hover:bg-gray-50 transition-colors">
+            <button
+              onClick={handleBuyNow}
+              disabled={adding}
+              className="w-full border border-black py-4 text-sm tracking-wider hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
               BUY NOW
             </button>
           </div>
 
-          {/* 상세 설명 */}
           {product.nmDetailExplain && (
             <div className="border-t border-gray-100 pt-6 mt-4">
               <p className="text-xs tracking-wider text-gray-700 mb-3">DESCRIPTION</p>
